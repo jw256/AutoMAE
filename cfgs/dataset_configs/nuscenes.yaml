@@ -1,0 +1,5 @@
+NAME: nuscenes
+DATA_PATH: /workspace/nuscenes
+N_POINTS: 100000
+NUM_CATEGORY: 10
+USE_NORMALS: FALSE

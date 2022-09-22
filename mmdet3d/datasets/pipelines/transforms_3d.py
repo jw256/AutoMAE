@@ -15,6 +15,7 @@ from mmdet.datasets.pipelines import RandomCrop, RandomFlip, Rotate
 from ..builder import OBJECTSAMPLERS, PIPELINES
 from .data_augment_utils import noise_per_object_v3_
 
+import mmcv
 
 @PIPELINES.register_module()
 class RandomDropPointsColor(object):
@@ -1850,4 +1851,46 @@ class RandomShiftScale(object):
         repr_str = self.__class__.__name__
         repr_str += f'(shift_scale={self.shift_scale}, '
         repr_str += f'aug_prob={self.aug_prob}) '
+        return repr_str
+
+
+
+@PIPELINES.register_module()
+class NormalizeMultiViewImage:
+    """Normalize the image.
+    Added key is "img_norm_cfg".
+    Args:
+        mean (sequence): Mean values of 3 channels.
+        std (sequence): Std values of 3 channels.
+        to_rgb (bool): Whether to convert the image from BGR to RGB,
+            default is true.
+    """
+
+    def __init__(self, mean, std, to_rgb=True):
+        self.mean = np.array(mean, dtype=np.float32)
+        self.std = np.array(std, dtype=np.float32)
+        self.to_rgb = to_rgb
+
+    def __call__(self, results):
+        """Call function to normalize images.
+        Args:
+            results (dict): Result dict from loading pipeline.
+        Returns:
+            dict: Normalized results, 'img_norm_cfg' key is added into
+                result dict.
+        """        
+        # print([img.shape for img in results['img']])
+        normalized_imgs = [mmcv.imnormalize(img, 
+                                            self.mean, 
+                                            self.std,
+                                            self.to_rgb) 
+                            for img in results['img']]
+        results['img'] = normalized_imgs 
+        results['img_norm_cfg'] = dict(
+            mean=self.mean, std=self.std, to_rgb=self.to_rgb)
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(mean={self.mean}, std={self.std}, to_rgb={self.to_rgb})'
         return repr_str

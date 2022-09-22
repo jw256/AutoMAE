@@ -1,0 +1,51 @@
+optimizer : {
+  type: AdamW,
+  kwargs: {
+  lr : 0.0001,
+  weight_decay : 0.05
+}}
+
+scheduler: {
+  type: CosLR,
+  kwargs: {
+    epochs: 30,
+    initial_epochs : 0
+}}
+
+dataset : {
+  NAME: nuscenes,
+  train : { _base_: cfgs/dataset_configs/nuscenes.yaml,  # _base_는 file open을 하니깐 실제 있는 파일 적어둬야 함
+            others: {subset: 'train', npoints: 100000}},
+  val : { _base_: cfgs/dataset_configs/nuscenes.yaml,
+            others: {subset: 'test', npoints: 100000}},
+  test : { _base_: cfgs/dataset_configs/nuscenes.yaml,
+            others: {subset: 'test', npoints: 100000}}}
+
+model : {
+  NAME: Multi_MAE, #Point_MAE,
+  group_size: 64,
+  num_group: 2048,
+  loss: cdl2,
+  transformer_config: {
+    mask_ratio: 0.6,
+    mask_type: 'rand',
+    trans_dim: 384, #192, #384,
+    encoder_dims: 384, #192, #384,
+    depth: 4, #6, #12
+    drop_path_rate: 0.1,
+    num_heads: 6,
+    decoder_depth: 4,
+    decoder_num_heads: 6,
+  },
+  pts_weight: 0.1,
+  # rgb
+  patch_size: 16,
+  rgb_encoded_tokens: 1000,
+  rgb_weight: 1,
+  cams: ['front', 'frontright', 'frontleft', 'back', 'backleft', 'backright']
+  }
+
+npoints: 100000
+total_bs : 4
+step_per_update : 1
+max_epoch : 300
